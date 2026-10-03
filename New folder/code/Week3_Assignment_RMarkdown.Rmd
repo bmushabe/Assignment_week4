@@ -1,0 +1,653 @@
+---
+title: 'Assignment 3: NHANES Data visualisation'
+output:
+  pdf_document: default
+  beamer_presentation:
+    theme: AnnArbor
+    colortheme: dolphin
+    fonttheme: structurebold
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+##Loading the required packages 
+library(tidyverse)
+library(here)
+library(rio)
+```
+
+```{r}
+##create the required folders in the working directory
+dir.create(here("data"), showWarnings = FALSE)
+dir.create(here("scripts"), showWarnings = FALSE)
+dir.create(here("figures"), showWarnings = FALSE)
+dir.create(here("reports"), showWarnings = FALSE)
+```
+
+
+
+```{r}
+##Import the datasets in the data subfolder
+##importing NHANES datast
+pacman::p_load(here)
+file.copy(
+  from = "C:/Users/userx/Downloads/cleaned_NHANES (1).csv",
+  to = here("data", "cleaned_nhanes.csv"),
+  overwrite = TRUE
+)
+nhanes_data <- import(here("data", "cleaned_nhanes.csv"))
+diet_1_ <- import(here("data", "diet (1).csv"))
+##importing diet dataset
+file.copy(
+  from = "C:/Users/userx/Downloads/diet (1).csv",
+  to = here("data", "diet (1).csv"),
+  overwrite = TRUE
+)
+diet_data <- import(here("data", "cleaned_nhanes.csv"))
+
+```
+
+```{r}
+##Exercise 1-Reproducing and arranging ggplot2 figures
+##Figure 1: Histogram of age
+names(nhanes_data)
+view(nhanes_data$gender)
+library(ggplot2)
+##checking the labels 
+library(dplyr)
+str(nhanes_data$gender)
+str(nhanes_data$age_cat)
+str(nhanes_data[c("age", "gender")])
+ # Figure 1: Bar Chart for Gender Distribution
+okabe_ito_palette <- c("#E69F00", "#56B4E9", "#009E73", "#0072B2", "#D55E00", "#CC79A7", "#999999")
+fig_1 <- ggplot(nhanes_data, aes(x = age, fill = gender)) +
+  geom_histogram(binwidth = 5, color = "white", boundary = 0, alpha = 0.8, position = "dodge") +
+  scale_fill_manual(values = okabe_ito_palette) +
+  labs(
+    title = "Distribution of Age by Gender in the NHANES",
+    subtitle = "Each bin represents a 5-year interval",
+    x = "Age (Years)",
+    y = "Count",
+    fill = "Gender"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    panel.grid.minor = element_blank()
+  )
+fig_1
+  
+ ##Figure 2: Histogram of age 
+ names(nhanes_data) 
+ view(nhanes_data$ethnicity_2)
+ fig_2 <- ggplot(nhanes_data, aes(x = ethnicity_1, fill = gender)) +
+  geom_bar(position = "fill", color = "white", alpha = 0.8) +
+  scale_fill_manual(values = okabe_ito_palette) +
+  labs(
+    title = "Distribution of Ethnicity by Gender in the NHANES Dataset",
+    x = "Ethnicity",
+    y = "count",
+    fill = "Gender"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+
+# Display the plot
+fig_2
+ 
+  
+```
+
+
+```{r}
+##Figure 2: Histogram of age 
+ names(nhanes_data) 
+ view(nhanes_data$ethnicity_2)
+ fig_2 <- ggplot(nhanes_data, aes(x = ethnicity_2, fill = gender)) +
+  geom_bar(position = "fill", color = "white", alpha = 0.8) +
+  scale_fill_manual(values = okabe_ito_palette) +
+  labs(
+    title = "Distribution of Ethnicity by Gender in the NHANES Dataset",
+    x = "Ethnicity",
+    y = "count",
+    fill = "Gender"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+
+# Display the plot
+fig_2
+```
+
+```{r}
+##combining fig_1 and fig_2
+library(cowplot)
+library(ggpubr)
+##Using the package "cowplot"
+plot_grid(
+  fig_1, fig_2,
+  rel_heights = c(1, 1), 
+  nrow = 2, 
+  ncol = 1
+)
+```
+```{r}
+##Using the package "ggarrange"
+ggarrange(
+  fig_1, fig_2, nrow = 2, ncol = 2,
+  common.legend = TRUE, legend = "top"
+)
+```
+
+##Which of the combined plots looks better 
+Although both plots are acceptable, the "ggarrange()" both plots share the same legend which makes it easy for the audience to understand. 
+
+# ==========================================
+# Exercise 2-Visualizing key characteristics
+# ==========================================
+
+```{r}
+##Using ggplot() to create appropriate visualisations 
+view(nhanes_data$age)
+visual_age <- p_age <- ggplot(nhanes_data, aes(x = age)) +
+  geom_histogram(binwidth = 5, fill = "#009E73", color = "white", alpha = 0.8) +
+  labs(
+    title = "Distribution of Age in the NHANES Dataset",
+    subtitle = "Each bin represents a 5-year interval",
+    x = "Age (Years)",
+    y = "Count"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    panel.grid.minor = element_blank()
+  )
+
+visual_age
+##checking for misingness 
+sum(is.na(nhanes_data$age))
+sum(nhanes_data$age)
+```
+##Distribution of age 
+For the variable age, the distribution shows a right-skewed pattern. The age of the patients range from 0 to 80 years with a median age of 28ears and average age of 32.5 years. There are no missing vales in the variable age.
+
+
+```{r}
+##Visualising Gender 
+visual_gender <- ggplot(nhanes_data, aes(x = gender, fill = gender)) +
+  geom_bar(alpha = 0.8) +
+  scale_fill_manual(values = okabe_ito_palette) +
+  labs(
+    title = "Distribution of Gender in the NHANES Sample",
+    x = "Gender",
+    y = "Count",
+    fill = "Gender"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    legend.position = "none", 
+    panel.grid.minor = element_blank()
+  )
+
+visual_gender
+##checking for missingness 
+sum(is.na(nhanes_data$gender))
+table(nhanes_data$gender)
+```
+##Distribution of Gender
+Among the patients, (14,948)50.8% are female and 14,452(49.2%) and there are no missing values in the variable gender
+
+```{r}
+##Distribution of Ethinicity1
+visual_ethinicity_1 <- ggplot(nhanes_data, aes(x = ethnicity_1, fill = ethnicity_1)) +
+  geom_bar(alpha = 0.8) +
+  scale_fill_manual(values = okabe_ito_palette) +
+  labs(
+    title = "Distribution of  Ethnicity1",
+    x = "Ethnicity 1",
+    y = "Count",
+    fill = "Ethnicity1"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    legend.position = "none"
+  )
+
+visual_ethinicity_1
+##checking for missingness
+sum(is.na(nhanes_data$ethnicity_1))
+table(nhanes_data$ethnicity_1)
+```
+
+##Distribution of first category of ethnicity1
+The total number of participants is 29,400, of these the majority are white 9,890 (33.6%) followed by the black participants 6,511 (22.2%). The lowest category of participants is hispanic 3,088 (10.5%). This category of ethinicity has no missing values.
+
+
+```{r}
+visual_ethinicity_2 <- ggplot(nhanes_data, aes(x = ethnicity_2, fill = ethnicity_2)) +
+  geom_bar(alpha = 0.8) +
+  scale_fill_manual(values = okabe_ito_palette) +
+  labs(
+    title = "Distribution of  Ethnicity2",
+    x = "Ethnicity 2",
+    y = "Count",
+    fill = "Ethnicity2"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    legend.position = "none"
+  )
+
+visual_ethinicity_2
+##checking for missingness
+ethinicity2_table <- table(nhanes_data$ethnicity_2, useNA = "ifany")
+
+data.frame(
+  ethin = names(ethinicity2_table),
+  Frequency = as.vector(ethinicity2_table),
+  Percentage = round(as.vector(prop.table(ethinicity2_table) * 100), 1)
+)
+```
+```{r}
+summary(nhanes_data$age)
+table(nhanes_data$gender)
+table(nhanes_data$ethnicity_1)
+table(nhanes_data$ethnicity_2)
+```
+```{r}
+##Using "ggsave" to save all plots in the figure subfolder in the working directory
+##saving age
+ggsave(
+  filename = "age_distribution_plot.png",
+  plot = visual_age,
+  path = here("figures"),
+  width = 8, 
+  height = 6
+)
+##saving gender
+ggsave(
+  filename = "gender_distribution_plot.png",
+  plot = visual_gender,
+  path = here("figures"),
+  width = 8, 
+  height = 6
+)
+##saving ethinicity1
+ggsave(
+  filename = "Ethinicity1_distribution_plot.png",
+  plot = visual_ethinicity_1,
+  path = here("figures"),
+  width = 8, 
+  height = 6
+)
+##saving ethinicity2
+ggsave(
+  filename = "Ethinicity2_distribution_plot.png",
+  plot = visual_ethinicity_2,
+  path = here("figures"),
+  width = 8, 
+  height = 6
+)
+```
+
+```{r}
+##choosing from the two categories of ethinicity
+##structure of the two categories 
+str(nhanes_data$ethnicity_1)
+str(nhanes_data$ethnicity_2)
+##tabulating the categoties 
+table(nhanes_data$ethnicity_1)
+table(nhanes_data$ethnicity_2)
+##checking for missingness
+sum(is.na(nhanes_data$ethnicity_1))
+sum(is.na(nhanes_data$ethnicity_2))
+```
+##Decision
+Ater analysisng the two categories, i decided to keep Ethinicity2 category and drop category 1. Whereas both categories have an equal number of observations (29,400), ethinicity1 has 5 categories while ethinicity has 6 categories. Ethinicity2 adds on the "asian" category which makes it more representaive than category 1. 
+
+```{r}
+##keeping Ethinicity
+nhanes_data <- nhanes_data %>%
+  select(-ethnicity_1)
+names(nhanes_data)
+```
+# ==========================================
+# Exercise 3-Improving ggplot figure
+# ==========================================
+##points that need improvement in your colleague's figure and how i will improve them.
+In my colleague's plot, there's no title, i will create a plot and give a title "Participant's Weight Change from Baseline weight". This helps the audience the the objective of the plot at first glance.
+
+The objective of the study is to show how each participants weight had changed over time from the baseline weight. My colleague's plot doesn't show baseline weight. I will create a baseline weight (at 0) and show how each participant deviates from it. Those above it have had a weight gain and those below it have had a weight loss. 
+
+```{r}
+## To determine how each participant's weight has changed over time in comparison to the baseline weight 
+## It should be observed that this is a longitudinal dataset
+
+change_in_weight <- diet_1_ %>%
+  group_by(Participant) %>%
+  arrange(Week) %>%
+  mutate(
+    baseline_weight = Weight[Week == 0][1],
+    change_from_baseline = Weight - baseline_weight
+  ) %>%
+  ungroup()
+
+head(change_in_weight)
+change_in_weight
+```
+
+From the results, 0 means there was no change in weight after following the diet, negative means theres was a loss in weight and a positive means there was a gain in weight. 
+
+```{r}
+##Plotting the right spaghetti plot to show each participants weight has changed 
+library(RColorBrewer) # Required for ColorBrewer palettes
+
+plot_data <- change_in_weight %>%
+  group_by(Participant) %>%
+  arrange(Week, .by_group = TRUE) %>%
+  mutate(
+    baseline_weight = first(Weight[Week == 0]),
+    change_from_baseline = Weight - baseline_weight
+  ) %>%
+  ungroup()
+
+# 1. Generate a color palette using RColorBrewer
+num_participants <- n_distinct(plot_data$Participant)
+my_colors <- colorRampPalette(brewer.pal(8, "Set2"))(num_participants)
+
+# 2. Build the plot with individual distinct colors
+ggplot(
+  plot_data,
+  aes(
+    x = Week,
+    y = change_from_baseline,
+    group = Participant,
+    color = factor(Participant) # Map a unique color per participant
+  )
+) +
+  # Reference line at zero (Baseline)
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed",
+    color = "black",
+    linewidth = 0.7
+  ) +
+  # Individual trajectories
+  geom_line(
+    linewidth = 1,
+    alpha = 0.8
+  ) +
+  geom_point(
+    size = 1.6,
+    alpha = 0.8
+  ) +
+  # Apply the RColorBrewer custom palette
+  scale_color_manual(values = my_colors) +
+  # X-axis formatting
+  scale_x_continuous(
+    breaks = seq(0, 16, by = 2)
+  ) +
+  # Professional labels and titles
+  labs(
+    title = "Participant's Weight Change from Baseline weight",
+    x = "Week on diet",
+    y = "Change from baseline weight (kg)",
+    color = "Participant"
+  ) +
+  # Theme styling
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "right" # Set to "none" if the legend is too large for your layout
+  )
+```
+
+# ==========================================
+# Exercise 4-Exploring relationships through visualizations
+# ==========================================
+##The objective of this part is to explore relationships between age, gender, and systolic blood pressure
+##(SBP) using effective visual storytelling
+```{r}
+names(nhanes_data)
+view(nhanes_data)
+##Averaging the systolic blood pressure variables 
+names(nhanes_data)
+nhanes_data <- nhanes_data %>%
+  mutate(
+    avg_sbp = rowMeans(
+      select(., systolic_bp_1, systolic_bp_2, systolic_bp_3, systolic_bp_4), 
+      na.rm = TRUE
+    ),
+    avg_sbp = ifelse(is.nan(avg_sbp), NA, avg_sbp)
+  )
+##Create a new categorical variable that classifies individuals based on their average SBP
+nhanes_data <- nhanes_data %>%
+  mutate(
+    sbp_category = case_when(
+      avg_sbp < 120 ~ "Normal",
+      avg_sbp >= 120 & avg_sbp < 130 ~ "Elevated",
+      avg_sbp >= 130 & avg_sbp < 140 ~ "Stage 1 hypertension",
+      avg_sbp >= 140 ~ "Stage 2 hypertension",
+      TRUE ~ NA_character_ 
+    ),
+    sbp_category = factor(
+      sbp_category, 
+      levels = c("Normal", "Elevated", "Stage 1 hypertension", "Stage 2 hypertension")
+    )
+  )
+names(nhanes_data)
+view(nhanes_data)
+##Use the filter() function to create a new datasets that includes only individuals who have
+#non-missing values for age, gender, and average SBP.
+nhanes_clean <- nhanes_data %>%
+  filter(!is.na(age_cat) & !is.na(gender) & !is.na(avg_sbp))
+view(nhanes_clean)
+names(nhanes_clean)
+##the new data set (nhanes_clean) has 23 variables and 21,604 observations
+##using facet_wrap() to investigate hypertension varies across age and gender 
+ggplot(nhanes_clean, aes(x = age_cat, fill = sbp_category)) +
+  geom_bar(position = "fill", color = "black", linewidth = 0.3) +
+  ##using the facet_wrap to display the relationship
+  facet_wrap(~ gender) +
+  scale_fill_manual(
+    values = c(
+      "Normal"              = "#009E73", # Green
+      "Elevated"            = "#F0E442", # Yellow
+      "Stage 1 hypertension" = "#E69F00", # Orange
+      "Stage 2 hypertension" = "#D55E00"  # Red-Orange
+    )
+  ) +
+  labs(
+    title = "Distribution of Blood Pressure Categories by Age and Gender",
+    x = "Age Category",
+    y = "Proportion",
+    fill = "SBP Category"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "gray30", size = 11),
+    axis.text.x = element_text(angle = 25, hjust = 1), 
+    legend.position = "right",
+    panel.grid.minor = element_blank(),
+    strip.text = element_text(face = "bold", size = 11) 
+  )
+
+```
+
+```{r}
+##use of 4 plots to describe the final sample size
+old_dataset <- nrow(nhanes_data)
+new_dataset <- nrow(nhanes_clean)
+n_removed <- old_dataset - new_dataset
+percent_removed <- 100 * n_removed / old_dataset
+
+sample_sizes <- data.frame(
+  Dataset = c("old sample", "new sample"),
+  Observations = c(old_dataset, new_dataset)
+)
+
+sample_sizes
+```
+
+```{r}
+##Plot showing hypertension categories 
+##defining 
+sbp_colors <- c(
+  "Normal" = "#2CA25F",
+  "Elevated" = "#FDD835",
+  "Stage 1 hypertension" = "#FB8C00",
+  "Stage 2 hypertension" = "#D7301F"
+)
+
+plot_sbp <- ggplot(
+  nhanes_clean,
+  aes(x = sbp_category, fill = sbp_category)
+) +
+  geom_bar() +
+  scale_fill_manual(values = sbp_colors, drop = FALSE) +
+  labs(
+    title = "Hypertension categories in the final sample",
+    x = "Mean systolic blood pressure category",
+    y = "Number of participants"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 25, hjust = 1)
+  )
+
+plot_sbp
+
+
+```
+
+```{r}
+##Plot of gender distribution 
+p_gender <- ggplot(nhanes_clean, aes(x = gender, fill = gender)) +
+  geom_bar() +
+  labs(
+    title = "Gender distribution in the final sample",
+    x = "Gender",
+    y = "Number of participants"
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  theme_classic() +
+  theme(legend.position = "none")
+
+p_gender
+```
+
+```{r}
+##reuse one saved plot from Exercise 2 and compare it to the same variable's distribution in your final
+##sample
+##plot from exercise 2 was saved as "age_distribution_plot.png"
+library(dplyr)
+library(ggplot2)
+
+# Recreate the data used for the original saved plot
+age_comparison <- bind_rows(
+  nhanes_data %>%
+    filter(!is.na(age)) %>%
+    transmute(
+      age,
+      sample = "Original sample"
+    ),
+
+  nhanes_clean %>%
+    filter(!is.na(age)) %>%
+    transmute(
+      age,
+      sample = "Final sample"
+    )
+)
+
+# Faceted comparison using the same histogram style
+age_comparison <- bind_rows(
+  nhanes_data %>%
+    filter(!is.na(age)) %>%
+    select(age) %>%
+    mutate(sample = "Original sample"),
+
+  nhanes_clean %>%
+    filter(!is.na(age)) %>%
+    select(age) %>%
+    mutate(sample = "Final sample")
+)
+
+names(age_comparison)
+##the faceted plot 
+age_comparison_plot2 <- ggplot(
+  age_comparison,
+  aes(x = age)
+) +
+  geom_histogram(
+    binwidth = 5,
+    fill = "steelblue",
+    color = "white"
+  ) +
+  facet_wrap(~ sample, ncol = 1) +
+  labs(
+    title = "Age Distribution original and final distribution",
+    x = "Age",
+    y = "Number of Participants"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    strip.text = element_text(face = "bold")
+  )
+
+age_comparison_plot2
+
+
+```
+
+##Comparison of the plots before and after. 
+The age distribution generally remained similar before and after. However, the original histogram show more concentration in the early bins and the final shows more flatter bins. This means that those removed because of missing gender, mean SBP may not have been evenly distributed. In conclusion, filtering may have reduced the sample size but it doesnt change the distribution of age. 
+
+## A short report
+To analyze systolic blood pressure (SBP), i calculated an average for each participant using up to four available readings. Participants missing all four readings were excluded, along with anyone missing age or gender data. 
+
+The final sample contains fewer participants than the original data set, and its age distribution is not identical to the original distribution. Although the overall age range remains similar, the final sample is flatter at the younger end, where the original data set shows more pronounced bars. This suggests that missing data were not distributed entirely at random across age groups and that filtering may have changed the representation of younger participants.
+
+Younger participants are more commonly classified as having normal or elevated blood pressure, whereas older participants show a greater proportion of Stage 1 and Stage 2 hypertension. These age-related patterns are visible in both genders, although the proportions may differ somewhat between males and females within particular age groups.
+
+Overall, the visualizations suggest an association between increasing age and higher SBP in this cohort. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
