@@ -1,0 +1,97 @@
+---
+title: "NHANES Dashboard"
+author: "Mushabe Brian"
+date: "2026-10-04"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+# Load required packages
+library(flexdashboard)
+library(tidyverse)
+library(here)
+library(rio)
+
+# Import the cleaned NHANES dataset
+cleaned_nhanes <- import(here("data", "cleaned_nhanes.csv"))
+```
+
+Row {data-height=650}
+Distribution of Age by Gender in the Clean_NHANES Sample
+-----------------------------------------------------------------------
+
+```{r}
+ggplot(cleaned_nhanes, aes(x = age, fill = gender)) +
+  geom_histogram(binwidth = 5, color = "white", boundary = 0, alpha = 0.8, position = "dodge") +
+  scale_fill_manual(values = c("#E69F00", "#56B4E9", "#009E73", "#0072B2", "#D55E00", "#CC79A7", "#999999")) +
+  labs(
+    title = "Distribution of Age by Gender",
+    subtitle = "Each bin represents a 5-year interval",
+    x = "Age (Years)",
+    y = "Count",
+    fill = "Gender"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    panel.grid.minor = element_blank()
+  )
+```
+
+
+Row {data-height=350}
+Percentage of Adults (21+ Years)
+-----------------------------------------------------------------------
+
+```{r}
+pct_adults <- mean(cleaned_nhanes$age >= 21, na.rm = TRUE) * 100
+
+gauge(
+  value = round(pct_adults, 1), 
+  min = 0, 
+  max = 100, 
+  symbol = "%", 
+  sectors = gaugeSectors(
+    success = c(70, 100), 
+    warning = c(40, 69), 
+    danger = c(0, 39)
+  )
+)
+```
+
+Elevated Blood Pressure Rate
+-----------------------------------------------------------------------
+
+```{r}
+cleaned_nhanes <- cleaned_nhanes %>%
+  mutate(
+    avg_sbp = rowMeans(select(., systolic_bp_1, systolic_bp_2, systolic_bp_3, systolic_bp_4), na.rm = TRUE)
+  )
+
+pct_high_sbp <- mean(cleaned_nhanes$avg_sbp > 120, na.rm = TRUE) * 100
+
+valueBox(
+  value = paste0(round(pct_high_sbp, 1), "%"),
+  caption = "Average SBP > 120 mm Hg",
+  icon = "fa-heartbeat",
+  color = "primary"
+)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
