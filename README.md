@@ -1,14 +1,13 @@
-# Assignment_week4
-R Markdown reports, data visualizations, and dashboards built on the NHANES dataset.
+# NHANES Data Analysis & Visualization Assignment
 
-This repository contains the code, data, and outputs for a health data analysis assignment for the .
+## Project Overview
+This repository contains the complete R Markdown file for exercise 2-4 from last week, code, datasets, exported figures, and rendered reports. The project utilizes the historical **NHANES** dataset (maintaining original naming conventions like `RIAGENDR` for biological sex and `RIDRETH1`/`RIDRETH3` for race) to explore age, gender, ethnicity distributions, longitudinal weight changes, and blood pressure relationships.
 
-## Repository contents
+## Repository Structure
+* `code/` - contains the source R Markdown (`.Rmd`) file.
+* `data/` - Contains the cleaned CSV datasets (`cleaned_nhanes.csv`, `diet (1).csv`).
+* `figs/` - Stores exported high-resolution visualization plots (`.png`).
+* `reports/` - Contains the final rendered PDF report.
 
-- `code/` — R Markdown files and other code used for the analysis.
-- `data/` — Data  used in the analysis. The clen NHANES Dataset
-- `figures/` — Figures created for the analysis.
-- `reports/` — Rendered PDF reports and other final outputs.
-
-
-
+## Reproducibility & Navigation
+All file paths are configured using relative paths via the `here` package. To view the final compiled work without running code from scratch, open the pre-rendered PDF document located in the `reports/` folder.
