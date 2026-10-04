@@ -1,0 +1,188 @@
+---
+title: "A Descriptive Report of the NHANES Dataset"
+author: "Mushabe Brian"
+date: "2026-10-04"
+output: pdf_document
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Loading packages 
+```{r}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+# Introduction
+
+The National Health and Nutrition Examination Survey (NHANES) is a program of
+studies designed to assess the health and nutritional status of people in the
+United States. This report describes the cleaned NHANES sample by survey wave,
+including sample size, sex, ethnicity, and average systolic blood pressure.
+
+# Data preparation
+
+The code below assumes the data have columns named `wave`, `sex`, `ethnicity`,
+and `average_systolic_bp`. Replace these names and category labels as needed.
+The percentages for sex and ethnicity use the total sample size within each
+wave as the denominator. Missing values are excluded from the relevant category
+counts and blood-pressure summaries.
+
+## import data 
+```{r}
+pacman::p_load(here, rio)
+file.copy(
+  from = "C:/Users/userx/Downloads/cleaned_NHANES (1).csv",
+  to = here("data", "cleaned_nhanes.csv"),
+  overwrite = TRUE
+)
+cleaned_nhanes <- import(here("data", "cleaned_nhanes.csv"))
+```
+
+# Table 1: Overall Sample Size and Male Demographics by Wave
+```{r}
+table1_data <- cleaned_nhanes %>%
+  group_by(wave_id) %>%
+  summarise(
+    Total_Sample_Size = n(),
+    Male_Count = sum(tolower(gender) == "male", na.rm = TRUE),
+    Male_Percent = round((Male_Count / Total_Sample_Size) * 100, 1)
+  )
+names(cleaned_nhanes)
+```
+
+
+## ethinicity of the participants 
+```{r}
+table2_data <- cleaned_nhanes %>%
+  group_by(wave_id, ethnicity_1) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  group_by(wave_id) %>%
+  mutate(Percent = round((Count / sum(Count)) * 100, 1)) %>%
+  pivot_wider(names_from = wave_id, values_from = c(Count, Percent))
+```
+
+## systolic blood pressure measurements 
+```{r}
+# 1. Compute the average systolic BP for each patient across the available readings
+cleaned_nhanes <- cleaned_nhanes %>%
+  mutate(avg_systolic = rowMeans(select(., systolic_bp_1, systolic_bp_2, systolic_bp_3, systolic_bp_4), na.rm = TRUE))
+
+# 2. Summarize summary statistics by wave_id
+table3_data <- cleaned_nhanes %>%
+  group_by(wave_id) %>%
+  summarise(
+    Min_BP = min(avg_systolic, na.rm = TRUE),
+    Max_BP = max(avg_systolic, na.rm = TRUE),
+    Median_BP = median(avg_systolic, na.rm = TRUE),
+    Mean_BP = round(mean(avg_systolic, na.rm = TRUE), 1),
+    SD_BP = round(sd(avg_systolic, na.rm = TRUE), 1)
+  )
+view(table3_data)
+```
+
+## advanced formatting options to emphasize information of your choice.
+```{r}
+table(cleaned_nhanes$ethnicity_1)
+table(cleaned_nhanes$avg_systolic, cleaned_nhanes$wave_id)
+```
+
+```{r}
+# Create contingency table of wave and gender
+gender_wave_table <- xtabs(~ wave_id + gender, data = cleaned_nhanes)
+
+# Add row and column totals
+gender_wave_margins <- addmargins(gender_wave_table)
+
+# Convert to a data frame for kable formatting
+table1_df <- as.data.frame.matrix(gender_wave_margins)
+gender_wave_table
+```
+```{r}
+# Create contingency table for wave and ethnicity_1
+eth_wave_table <- xtabs(~ ethnicity_1 + wave_id, data = cleaned_nhanes)
+
+# Calculate column proportions, multiply by 100, and round to 2 decimals
+eth_pct_table <- round(prop.table(eth_wave_table, margin = 2) * 100, 2)
+
+# Combine counts and percentages if desired, or format directly
+table2_df <- as.data.frame.matrix(eth_wave_table)
+eth_wave_table
+```
+##Sample Size and Gender Distribution
+
+```{r}
+kable(
+  gender_wave_margins, 
+  format = "latex",
+  booktabs = TRUE,
+  col.names = c("Wave", "Female", "Male", "Total"),
+  caption = "Overall Sample Size and Gender Distribution by Wave"
+) %>%
+  kable_styling(
+    latex_options = c("striped", "hold_position"),
+    full_width = FALSE
+  ) %>%
+  row_spec(0, bold = TRUE) %>%                    
+  column_spec(1, bold = TRUE) %>%                   
+  column_spec(ncol(gender_wave_margins), bold = TRUE)
+```
+
+## Ethnicity Breakdown Across Waves
+Understanding the ethnic diversity of the sample is critical for population health assessments. Below, cross-tabulation and row/column proportions (prop.table()) highlight the distribution of participants across different ethnic categories per wave.
+```{r}
+kable(
+  eth_wave_table, 
+  format = "latex",
+  booktabs = TRUE,
+  col.names = c("Ethnicity", "Wave 1 (n)", "Wave 2 (n)"), # Adjust column names to match your wave columns
+  caption = "Ethnicity Breakdown Across Survey Waves"
+) %>%
+  kable_styling(
+    latex_options = c("striped", "hold_position", "scale_down"),
+    full_width = FALSE
+  ) %>%
+  row_spec(0, bold = TRUE) %>%
+  column_spec(1, bold = TRUE)
+```
+
+
+## Systolic Blood Pressure Summary Statistics
+Clinical measurements such as blood pressure provide vital benchmarks for cardiovascular health. Participants underwent multiple blood pressure measurements (systolic_bp_1 through systolic_bp_4). We compute each participant's average systolic reading, then aggregate summary statistics (dplyr grouped by wave_id).
+```{r}
+kable(
+  table3_data, 
+  format = "latex",
+  booktabs = TRUE,
+  col.names = c("Wave", "Minimum", "Maximum", "Median", "Mean", "Std. Dev."),
+  caption = "Summary Statistics of Average Systolic Blood Pressure by Wave"
+) %>%
+  kable_styling(
+    latex_options = c("striped", "hold_position"),
+    full_width = FALSE
+  ) %>%
+  row_spec(0, bold = TRUE) %>%
+  column_spec(1, bold = TRUE) %>%
+  column_spec(5, bold = TRUE) # Emphasizing the Mean column
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
